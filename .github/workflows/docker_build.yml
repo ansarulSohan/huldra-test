@@ -1,7 +1,7 @@
-name: Build docker image
+name: Test docker image
 on:
   workflow_run:
-    workflows: ["Build on Push"]
+    workflows: ["Test build"]
     types:
       - completed
 
@@ -12,11 +12,15 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v3
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+          heroku --version
       - name: login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{secrets.DOCKERHUB_USERNAME}}
-          password: ${{secrets.DOCKERHUB_TOKEN}}
+          password: ${{secrets.DOCKERHUB_PASSWORD}}
       - name: Build and Push
         env:
           REACT_APP_FIREBASE_API_KEY: ${{secrets.REACT_APP_API_KEY}}
@@ -27,7 +31,8 @@ jobs:
           REACT_APP_FIREBASE_STORAGE_BUCKET: ${{secrets.REACT_APP_FIREBASE_STORAGE_BUCKET}}
           REACT_APP_FIREBASE_ROOT_DIRECTORY: ${{secrets.REACT_APP_FIREBASE_ROOT_DIRECTORY}}
         run: 
-          docker build . --build-arg REACT_APP_FIREBASE_API_KEY=$REACT_APP_FIREBASE_API_KEY --build-arg REACT_APP_FIREBASE_APP_ID=$REACT_APP_FIREBASE_APP_ID --build-arg REACT_APP_FIREBASE_AUTH_DOMAIN=$REACT_APP_FIREBASE_AUTH_DOMAIN --build-arg REACT_APP_FIREBASE_MESSAGING_SENDER_ID=$REACT_APP_FIREBASE_MESSAGING_SENDER_ID --build-arg REACT_APP_FIREBASE_PROJECT_ID=$REACT_APP_FIREBASE_PROJECT_ID --build-arg REACT_APP_FIREBASE_STORAGE_BUCKET=$REACT_APP_FIREBASE_STORAGE_BUCKET --build-arg REACT_APP_FIREBASE_ROOT_DIRECTORY=$REACT_APP_FIREBASE_ROOT_DIRECTORY -t ${{secrets.DOCKERHUB_REPO}}:latest -t ${{secrets.DOCKERHUB_REPO}}:${{github.run_number}} -t registry.heroku.com/${{vars.HEROKU_APP_NAME}}/web . && docker push ${{secrets.DOCKERHUB_REPO}}:latest && docker push ${{secrets.DOCKERHUB_REPO}}:${{github.run_number}}
+          docker build . --build-arg REACT_APP_FIREBASE_API_KEY=$REACT_APP_FIREBASE_API_KEY --build-arg REACT_APP_FIREBASE_APP_ID=$REACT_APP_FIREBASE_APP_ID --build-arg REACT_APP_FIREBASE_AUTH_DOMAIN=$REACT_APP_FIREBASE_AUTH_DOMAIN --build-arg REACT_APP_FIREBASE_MESSAGING_SENDER_ID=$REACT_APP_FIREBASE_MESSAGING_SENDER_ID --build-arg REACT_APP_FIREBASE_PROJECT_ID=$REACT_APP_FIREBASE_PROJECT_ID --build-arg REACT_APP_FIREBASE_STORAGE_BUCKET=$REACT_APP_FIREBASE_STORAGE_BUCKET --build-arg REACT_APP_FIREBASE_ROOT_DIRECTORY=$REACT_APP_FIREBASE_ROOT_DIRECTORY -t ansarulsohan/huldra_test:latest -t ansarulsohan/huldra_test:${{github.run_number}} -t registry.heroku.com/host-tmp/web:latest && docker push ansarulsohan/huldra_test:latest && docker push ansarulsohan/huldra_test:${{github.run_number}}
+      
       - name: Login to Heroku
         run: |
           heroku container:login
